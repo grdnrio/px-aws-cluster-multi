@@ -10,6 +10,15 @@ keypair_name = "***"
 region = "eu-west-2"
 type = "t3.medium"
 
+open("hosts", "w") do |f|
+  (1..clusters).each do |c|
+    f << "master-#{c}\n"
+    (1..nodes).each do |n|
+      f << "node-#{c}-#{n}\n"
+    end
+  end
+end
+
 Vagrant.configure("2") do |config|
   config.vm.box = "dummy"
   config.vm.synced_folder ".", "/vagrant", type: "rsync"
