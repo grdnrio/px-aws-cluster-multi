@@ -12,9 +12,9 @@ type = "t3.medium"
 
 open("hosts", "w") do |f|
   (1..clusters).each do |c|
-    f << "master-#{c}\n"
+    f << "192.168.99.1#{c}0 master-#{c}\n"
     (1..nodes).each do |n|
-      f << "node-#{c}-#{n}\n"
+      f << "192.168.99.1#{c}#{n} node-#{c}-#{n}\n"
     end
   end
 end
