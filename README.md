@@ -18,7 +18,7 @@ $ vagrant plug install vagrant-aws
 
 4. Clone this repo and cd to it.
 
-5. Edit `Vagrantfile` as necessary.
+5. Edit `create-vpc.sh` to select AZ. Edit parameters at the top of `Vagrantfile` as necessary.
 
 6. Generate SSH keys:
 ```

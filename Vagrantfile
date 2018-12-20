@@ -1,14 +1,15 @@
 clusters = 2
 nodes = 3
-subnet_id = "#{ENV['subnet']}"
-security_group_id = "#{ENV['sg']}"
 disk_size = 10
-ami = "ami-00846a67"
 access_key = "***"
 secret_key = "***"
 keypair_name = "***"
-region = "eu-west-2"
 type = "t3.medium"
+
+subnet_id = "#{ENV['subnet']}"
+security_group_id = "#{ENV['sg']}"
+ami = "#{ENV['ami']}"
+region = "#{ENV['AWS_DEFAULT_REGION']}"
 
 open("hosts", "w") do |f|
   (1..clusters).each do |c|
@@ -76,6 +77,10 @@ Vagrant.configure("2") do |config|
           kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
           wait %1
           kubectl apply -f 'https://install.portworx.com/2.0?kbver=1.13.1&b=true&s=%2Fdev%2Fnvme1n1&m=ens5&d=ens5&c=px-demo-#{c}&stork=true&st=k8s&lh=true'
+          #kubectl apply -f https://docs.portworx.com/samples/k8s/portworx-pxc-operator.yaml
+          #kubectl create secret generic alertmanager-portworx -n kube-system --from-file=<(curl -s https://docs.portworx.com/samples/k8s/portworx-pxc-alertmanager.yaml | sed 's/<.*address>/dummy@dummy.com/;s/<.*password>/dummy/;s/<.*port>/localhost:25/')
+          #curl http://openstorage-stork.s3-website-us-east-1.amazonaws.com/storkctl/2.0.0/linux/storkctl -o /usr/local/bin/storkctl
+          #chmod +x /usr/local/bin/storkctl
           echo End
         ) &>/var/log/vagrant.bootstrap &
       SHELL
