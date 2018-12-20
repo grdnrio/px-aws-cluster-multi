@@ -67,7 +67,6 @@ Vagrant.configure("2") do |config|
           systemctl restart docker
           (docker pull portworx/oci-monitor ; docker pull openstorage/stork ; docker pull portworx/px-enterprise:2.0.0.1) &
           kubeadm config images pull &
-          sed -i 's/cgroup-driver=systemd/cgroup-driver=cgroupfs/g' /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
           systemctl enable docker kubelet
           systemctl start kubelet
           mkdir /root/.kube
@@ -93,7 +92,6 @@ Vagrant.configure("2") do |config|
           ( hostnamectl set-hostname node-#{c}-#{n}
             yum install -y kubeadm docker
             echo 'OPTIONS=" --registry-mirror=http://#{hostname_master}:5000"' >>/etc/sysconfig/docker
-            sed -i s/cgroup-driver=systemd/cgroup-driver=cgroupfs/g /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
             systemctl enable docker kubelet
             systemctl start docker kubelet
             kubeadm config images pull &
