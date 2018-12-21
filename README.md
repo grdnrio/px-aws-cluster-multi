@@ -1,6 +1,6 @@
 # What
 
-This will provision one or more Kubernetes clusters, along with Portworx, on an AWS VPC.
+This will provision one or more Kubernetes clusters, along with Portworx, on an AWS VPC. If there is more than one cluster, ClusterPairs will be configured with the first cluster as the source, and each of the other clusters as the destination.
 
 # How
 
@@ -44,4 +44,12 @@ $ vagrant ssh node-2-1
 [centos@node-1-1 ~]$ sudo /opt/pwx/bin/pxctl status
 ```
 
-10. Browse to port 32678 of one of the nodes. Add the cluster(s) to the Lighthouse instance.
+10. Check the status of the ClusterPair(s):
+```
+$ vagrant ssh master-1
+[centos@master-1 ~]$ sudo kubectl get clusterpairs
+NAME              AGE
+remotecluster-2   8m
+```
+
+11. Browse to port 32678 of one of the nodes. Add the cluster(s) to the Lighthouse instance.
