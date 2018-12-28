@@ -74,7 +74,7 @@ Vagrant.configure("2") do |config|
               [ $? -eq 0 ] && break
             done
           fi
-          (docker pull portworx/oci-monitor ; docker pull openstorage/stork ; docker pull portworx/px-enterprise:2.0.0.1) &
+          (docker pull portworx/oci-monitor:2.0.0.1 ; docker pull openstorage/stork ; docker pull portworx/px-enterprise:2.0.0.1) &
           systemctl enable docker kubelet
           systemctl start kubelet
           mkdir /root/.kube
@@ -84,8 +84,20 @@ Vagrant.configure("2") do |config|
           kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
           wait %2
           kubectl apply -f 'https://install.portworx.com/2.0?kbver=1.13.1&b=true&s=%2Fdev%2Fnvme1n1&m=ens5&d=ens5&c=px-demo-#{c}&stork=true&st=k8s&lh=true'
-          #kubectl apply -f https://docs.portworx.com/samples/k8s/portworx-pxc-operator.yaml
-          #kubectl create secret generic alertmanager-portworx -n kube-system --from-file=<(curl -s https://docs.portworx.com/samples/k8s/portworx-pxc-alertmanager.yaml | sed 's/<.*address>/dummy@dummy.com/;s/<.*password>/dummy/;s/<.*port>/localhost:25/')
+          kubectl apply -f https://docs.portworx.com/samples/k8s/portworx-pxc-operator.yaml
+          kubectl create secret generic alertmanager-portworx -n kube-system --from-file=<(curl -s https://docs.portworx.com/samples/k8s/portworx-pxc-alertmanager.yaml | sed 's/<.*address>/dummy@dummy.com/;s/<.*password>/dummy/;s/<.*port>/localhost:25/')
+          while : ; do
+            kubectl apply -f https://docs.portworx.com/samples/k8s/prometheus/02-service-monitor.yaml
+            [ $? -eq 0 ] && break
+          done
+          kubectl apply -f https://docs.portworx.com/samples/k8s/prometheus/05-alertmanager-service.yaml
+          kubectl apply -f https://docs.portworx.com/samples/k8s/prometheus/06-portworx-rules.yaml
+          kubectl apply -f https://docs.portworx.com/samples/k8s/prometheus/07-prometheus.yaml
+          mkdir /tmp/grafanaConfigurations
+          curl -o /tmp/grafanaConfigurations/Portworx_Volume_template.json -s https://raw.githubusercontent.com/portworx/px-docs/gh-pages/k8s-samples/grafana/dashboards/Portworx_Volume_template.json
+          curl -o /tmp/grafanaConfigurations/dashboardConfig.yaml -s https://raw.githubusercontent.com/portworx/px-docs/gh-pages/k8s-samples/grafana/config/dashboardConfig.yaml
+          kubectl create configmap grafana-config --from-file=/tmp/grafanaConfigurations -n kube-system
+          kubectl apply -f <(curl -s https://docs.portworx.com/samples/k8s/grafana/grafana-deployment.yaml | sed 's/config.yaml/dashboardConfig.yaml/g;/- port: 3000/a\\    nodePort: 30950')
           curl -s http://openstorage-stork.s3-website-us-east-1.amazonaws.com/storkctl/2.0.0/linux/storkctl -o /usr/local/bin/storkctl
           chmod +x /usr/local/bin/storkctl
           if [ $(hostname) != master-1 ]; then
@@ -121,7 +133,7 @@ Vagrant.configure("2") do |config|
               curl -s http://master-1:5000/v2/_catalog | grep -q px-enterprise
               [ $? -eq 0 ] && break
             done
-            (docker pull portworx/oci-monitor ; docker pull openstorage/stork ; docker pull portworx/px-enterprise:2.0.0.1) &
+            (docker pull portworx/oci-monitor:2.0.0.1 ; docker pull openstorage/stork ; docker pull portworx/px-enterprise:2.0.0.1) &
             while : ; do
               command=$(ssh -oConnectTimeout=1 -oStrictHostKeyChecking=no #{hostname_master} kubeadm token create --print-join-command)
               [ $? -eq 0 ] && break

@@ -53,3 +53,7 @@ remotecluster-2   8m
 ```
 
 11. Browse to port 32678 of one of the nodes. Add the cluster(s) to the Lighthouse instance.
+
+12. The Prometheus web UIs can be found on port 30900 on the masters.
+
+13. The Grafana dashboard can be found on port 30950 on the masters.
