@@ -94,8 +94,8 @@ Vagrant.configure("2") do |config|
           curl -o /tmp/grafanaConfigurations/dashboardConfig.yaml -s https://raw.githubusercontent.com/portworx/px-docs/gh-pages/k8s-samples/grafana/config/dashboardConfig.yaml
           kubectl create configmap grafana-config --from-file=/tmp/grafanaConfigurations -n kube-system
           kubectl apply -f <(curl -s https://docs.portworx.com/samples/k8s/grafana/grafana-deployment.yaml | sed 's/config.yaml/dashboardConfig.yaml/g;/- port: 3000/a\\    nodePort: 30950')
-          curl -s http://openstorage-stork.s3-website-us-east-1.amazonaws.com/storkctl/2.0.0/linux/storkctl -o /usr/local/bin/storkctl
-          chmod +x /usr/local/bin/storkctl
+          curl -s http://openstorage-stork.s3-website-us-east-1.amazonaws.com/storkctl/2.0.0/linux/storkctl -o /usr/bin/storkctl
+          chmod +x /usr/bin/storkctl
           if [ $(hostname) != master-1 ]; then
             while : ; do
               token=$(ssh -oConnectTimeout=1 -oStrictHostKeyChecking=no node-#{c}-1 pxctl cluster token show | cut -f 3 -d " ")
@@ -103,7 +103,7 @@ Vagrant.configure("2") do |config|
               [ $? -eq 0 ] && break
               sleep 5
             done
-            /usr/local/bin/storkctl generate clusterpair -n default remotecluster-#{c} | sed '/insert_storage_options_here/c\\    ip: node-#{c}-1\\n    token: '$token >/root/cp.yaml
+            storkctl generate clusterpair -n default remotecluster-#{c} | sed '/insert_storage_options_here/c\\    ip: node-#{c}-1\\n    token: '$token >/root/cp.yaml
             cat /root/cp.yaml | ssh -oConnectTimeout=1 -oStrictHostKeyChecking=no master-1 kubectl apply -f -
           fi
           echo End
