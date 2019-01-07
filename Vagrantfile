@@ -58,7 +58,7 @@ Vagrant.configure("2") do |config|
       end
       master.vm.provision "shell", inline: <<-SHELL
         ( hostnamectl set-hostname #{hostname_master}
-          yum install -y docker kubeadm
+          yum install -y docker kubeadm git
           systemctl start docker
           [ $(hostname) == master-1 ] && docker run -p 5000:5000 -d --restart=always --name registry -e REGISTRY_PROXY_REMOTEURL=http://registry-1.docker.io -v /opt/shared/docker_registry_cache:/var/lib/registry registry:2
           echo 'OPTIONS=" --registry-mirror=http://master-1:5000"' >>/etc/sysconfig/docker
