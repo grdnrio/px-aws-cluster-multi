@@ -58,7 +58,11 @@ Vagrant.configure("2") do |config|
       master.vm.provider :aws do |aws|
         aws.private_ip_address = "192.168.99.1#{c}0"
         aws.tags = { "Name" => "#{hostname_master}" }
+<<<<<<< HEAD
         aws.block_device_mapping = [{ "DeviceName" => "/dev/sda1", "Ebs.DeleteOnTermination" => true, "Ebs.VolumeSize" => 10 }]
+=======
+        aws.block_device_mapping = [{ "DeviceName" => "/dev/sda1", "Ebs.DeleteOnTermination" => true, "Ebs.VolumeSize" => 20 }]
+>>>>>>> Set root volume on masters to prevent ephemeral storage issues
       end
       master.vm.provision "shell", inline: <<-SHELL
         ( hostnamectl set-hostname #{hostname_master}
