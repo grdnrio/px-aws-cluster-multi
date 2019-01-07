@@ -1,8 +1,6 @@
 clusters = 2
 nodes = 3
 disk_size = 10
-access_key = "***"
-secret_key = "***"
 keypair_name = "***"
 type = "t3.medium"
 
@@ -24,8 +22,6 @@ Vagrant.configure("2") do |config|
   config.vm.box = "dummy"
   config.vm.synced_folder ".", "/vagrant", type: "rsync"
   config.vm.provider :aws do |aws, override|
-    aws.access_key_id = "#{access_key}"
-    aws.secret_access_key = "#{secret_key}"
     aws.security_groups = ["#{security_group_id}"]
     aws.keypair_name = "#{keypair_name}"
     aws.region = "#{region}"
@@ -74,7 +70,7 @@ Vagrant.configure("2") do |config|
               [ $? -eq 0 ] && break
             done
           fi
-          (docker pull portworx/oci-monitor:2.0.0.1 ; docker pull openstorage/stork ; docker pull portworx/px-enterprise:2.0.0.1) &
+          (docker pull portworx/oci-monitor:2.0.1 ; docker pull openstorage/stork ; docker pull portworx/px-lighthouse:2.0.1 ; docker pull portworx/px-enterprise:2.0.1) &
           systemctl enable docker kubelet
           systemctl start kubelet
           mkdir /root/.kube
@@ -133,7 +129,7 @@ Vagrant.configure("2") do |config|
               curl -s http://master-1:5000/v2/_catalog | grep -q px-enterprise
               [ $? -eq 0 ] && break
             done
-            (docker pull portworx/oci-monitor:2.0.0.1 ; docker pull openstorage/stork ; docker pull portworx/px-enterprise:2.0.0.1) &
+            (docker pull portworx/oci-monitor:2.0.1 ; docker pull openstorage/stork:2.0.1 ; docker pull portworx/px-enterprise:2.0.1) &
             while : ; do
               command=$(ssh -oConnectTimeout=1 -oStrictHostKeyChecking=no #{hostname_master} kubeadm token create --print-join-command)
               [ $? -eq 0 ] && break
