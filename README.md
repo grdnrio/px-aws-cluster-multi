@@ -15,7 +15,7 @@ This will provision one or more Kubernetes clusters, along with Portworx, on an 
 
 4. Install the AWS plugin for Vagrant:
 ```
-$ vagrant plug install vagrant-aws
+$ vagrant plugin install vagrant-aws
 ```
 
 5. Clone this repo and cd to it.
