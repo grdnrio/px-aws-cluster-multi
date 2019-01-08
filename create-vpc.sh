@@ -32,3 +32,4 @@ case $distro in
 esac
 
 export subnet sg ami distro AWS_DEFAULT_REGION
+print "STORED VALUE:" subnet sg ami distro AWS_DEFAULT_REGION
