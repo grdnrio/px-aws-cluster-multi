@@ -21,7 +21,7 @@ aws ec2 authorize-security-group-ingress --group-id $sg --protocol all --cidr 19
 
 case $distro in
   ubuntu)
-    ami=$(aws ec2 describe-images --owners 099720109477 --filters Name=name,Values=ubuntu/images/hvm-ssd/ubuntu-bionic-18.04-amd64-* --query 'sort_by(Images,&CreationDate)[-1].ImageId' --output text)
+    ami=$(aws ec2 describe-images --owners 099720109477 --filters Name=name,Values='ubuntu/images/hvm-ssd/ubuntu-bionic-18.04-amd64-*' --query 'sort_by(Images,&CreationDate)[-1].ImageId' --output text)
   ;;
   centos)
     ami=$(aws ec2 describe-images --owners 679593333241 --filters Name=name,Values='CentOS Linux 7 x86_64 HVM EBS*' Name=architecture,Values=x86_64 Name=root-device-type,Values=ebs --query 'sort_by(Images, &Name)[-1].ImageId' --output text)
