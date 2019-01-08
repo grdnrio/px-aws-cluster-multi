@@ -1,6 +1,6 @@
 # What
 
-This will provision one or more Kubernetes clusters, along with Portworx, on an AWS VPC. If there is more than one cluster, ClusterPairs will be configured with the first cluster as the source, and each of the other clusters as the destination.
+This will provision one or more CentOS or Ubuntu-based Kubernetes clusters, along with Portworx, on an AWS VPC. If there is more than one cluster, ClusterPairs will be configured with the first cluster as the source, and each of the other clusters as the destination.
 
 # How
 
@@ -20,7 +20,7 @@ $ vagrant plug install vagrant-aws
 
 5. Clone this repo and cd to it.
 
-6. Edit `create-vpc.sh` to select AZ. Edit parameters at the top of `Vagrantfile` as necessary.
+6. Edit `create-vpc.sh` to select AZ and distro. Edit parameters at the top of `Vagrantfile` as necessary.
 
 7. Generate SSH keys:
 ```

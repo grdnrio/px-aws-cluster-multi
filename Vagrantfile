@@ -1,13 +1,17 @@
+# Edit these parameters
 clusters = 2
 nodes = 3
-disk_size = 10
+disk_size = 20
 keypair_name = "***"
 type = "t3.medium"
 
+# Do not edit below this line
 subnet_id = "#{ENV['subnet']}"
 security_group_id = "#{ENV['sg']}"
 ami = "#{ENV['ami']}"
 region = "#{ENV['AWS_DEFAULT_REGION']}"
+distro = "#{ENV['distro']}"
+usernames = { "centos" => "centos", "ubuntu" => "ubuntu" }
 
 open("hosts", "w") do |f|
   (1..clusters).each do |c|
@@ -29,17 +33,17 @@ Vagrant.configure("2") do |config|
     aws.ami = "#{ami}"
     aws.subnet_id = "#{subnet_id}"
     aws.associate_public_ip = true
-    override.ssh.username = "centos"
+    override.ssh.username = usernames["#{distro}"]
     override.ssh.private_key_path = "#{ENV['HOME']}/.ssh/id_rsa"
   end
   config.vm.provision "shell", inline: <<-SHELL
-    setenforce 0
+    if [ -f /etc/selinux/config ]; then
+      setenforce 0
+      sed -i s/SELINUX=enforcing/SELINUX=disabled/g /etc/selinux/config
+    fi
     swapoff -a
-    sed -i s/SELINUX=enforcing/SELINUX=disabled/g /etc/selinux/config
     sed -i /swap/d /etc/fstab
-    sed -i s/enabled=1/enabled=0/ /etc/yum/pluginconf.d/fastestmirror.conf
     cp /vagrant/{sysctl.conf,hosts} /etc
-    cp /vagrant/*.repo /etc/yum.repos.d
     cp /vagrant/id_rsa /root/.ssh
     cp /vagrant/id_rsa.pub /root/.ssh/authorized_keys
     chmod 600 /root/.ssh/id_rsa
@@ -54,32 +58,32 @@ Vagrant.configure("2") do |config|
       master.vm.provider :aws do |aws|
         aws.private_ip_address = "192.168.99.1#{c}0"
         aws.tags = { "Name" => "#{hostname_master}" }
-        aws.block_device_mapping = [{ "DeviceName" => "/dev/sda1", "Ebs.DeleteOnTermination" => true }]
+        aws.block_device_mapping = [{ "DeviceName" => "/dev/sda1", "Ebs.DeleteOnTermination" => true, "Ebs.VolumeSize" => 10 }]
       end
       master.vm.provision "shell", inline: <<-SHELL
         ( hostnamectl set-hostname #{hostname_master}
-          yum install -y docker kubeadm
-          systemctl start docker
-          [ $(hostname) == master-1 ] && docker run -p 5000:5000 -d --restart=always --name registry -e REGISTRY_PROXY_REMOTEURL=http://registry-1.docker.io -v /opt/shared/docker_registry_cache:/var/lib/registry registry:2
-          echo 'OPTIONS=" --registry-mirror=http://master-1:5000"' >>/etc/sysconfig/docker
-          systemctl restart docker
-          kubeadm config images pull &
-          if [ $(hostname) != master-1 ]; then
-            while : ; do
-              curl -s http://master-1:5000/v2/_catalog | grep -q px-enterprise
-              [ $? -eq 0 ] && break
-            done
+          if [ #{distro} == centos ]; then
+            sed -i s/enabled=1/enabled=0/ /etc/yum/pluginconf.d/fastestmirror.conf
+            cp /vagrant/*.repo /etc/yum.repos.d
+            yum install -y kubeadm docker
+          elif [ #{distro} == ubuntu ]; then
+            curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add
+            echo deb http://apt.kubernetes.io/ kubernetes-xenial main >/etc/apt/sources.list.d/kubernetes.list
+            apt update -y
+            apt install -y docker.io kubeadm
           fi
-          (docker pull portworx/oci-monitor:2.0.1 ; docker pull openstorage/stork ; docker pull portworx/px-lighthouse:2.0.1 ; docker pull portworx/px-enterprise:2.0.1) &
+          systemctl start docker
+          kubeadm config images pull &
           systemctl enable docker kubelet
           systemctl start kubelet
-          mkdir /root/.kube
-          wait %1
+          wait
           kubeadm init --apiserver-advertise-address=192.168.99.1#{c}0 --pod-network-cidr=10.244.0.0/16
+          mkdir /root/.kube /home/#{usernames["#{distro}"]}/.kube
           cp /etc/kubernetes/admin.conf /root/.kube/config
+          cp /etc/kubernetes/admin.conf /home/#{usernames["#{distro}"]}/.kube/config
+          chown -R #{usernames["#{distro}"]} /home/#{usernames["#{distro}"]}/.kube
           kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
-          wait %2
-          kubectl apply -f 'https://install.portworx.com/2.0?kbver=1.13.1&b=true&s=%2Fdev%2Fnvme1n1&m=ens5&d=ens5&c=px-demo-#{c}&stork=true&st=k8s&lh=true'
+          kubectl apply -f 'https://install.portworx.com/2.0?kbver=1.13.1&b=true&m=ens5&d=ens5&c=px-demo-#{c}&stork=true&st=k8s&lh=true'
           kubectl apply -f https://docs.portworx.com/samples/k8s/portworx-pxc-operator.yaml
           kubectl create secret generic alertmanager-portworx -n kube-system --from-file=<(curl -s https://docs.portworx.com/samples/k8s/portworx-pxc-alertmanager.yaml | sed 's/<.*address>/dummy@dummy.com/;s/<.*password>/dummy/;s/<.*port>/localhost:25/')
           while : ; do
@@ -120,22 +124,26 @@ Vagrant.configure("2") do |config|
         end
         node.vm.provision "shell", inline: <<-SHELL
           ( hostnamectl set-hostname node-#{c}-#{n}
-            yum install -y kubeadm docker
-            echo 'OPTIONS=" --registry-mirror=http://master-1:5000"' >>/etc/sysconfig/docker
+            if [ #{distro} == centos ]; then
+               sed -i s/enabled=1/enabled=0/ /etc/yum/pluginconf.d/fastestmirror.conf
+               cp /vagrant/*.repo /etc/yum.repos.d
+              yum install -y kubeadm docker
+            elif [ #{distro} == ubuntu ]; then
+              curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add
+              echo deb http://apt.kubernetes.io/ kubernetes-xenial main >/etc/apt/sources.list.d/kubernetes.list
+              apt update -y
+              apt install -y docker.io kubeadm
+            fi
             systemctl enable docker kubelet
-            systemctl start docker kubelet
+            systemctl restart docker kubelet
             kubeadm config images pull &
-            while : ; do
-              curl -s http://master-1:5000/v2/_catalog | grep -q px-enterprise
-              [ $? -eq 0 ] && break
-            done
             (docker pull portworx/oci-monitor:2.0.1 ; docker pull openstorage/stork:2.0.1 ; docker pull portworx/px-enterprise:2.0.1) &
             while : ; do
               command=$(ssh -oConnectTimeout=1 -oStrictHostKeyChecking=no #{hostname_master} kubeadm token create --print-join-command)
               [ $? -eq 0 ] && break
               sleep 5
             done
-            wait
+            wait %1
             eval $command
             echo End
           ) &>/var/log/vagrant.bootstrap &

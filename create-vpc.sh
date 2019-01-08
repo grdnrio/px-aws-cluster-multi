@@ -1,5 +1,10 @@
-export AWS_DEFAULT_REGION=eu-west-1
+# Set the AWS region
+AWS_DEFAULT_REGION=eu-west-1
 
+# Valid distros are 'ubuntu' and 'centos'
+distro=ubuntu
+
+# Do not change below this line
 vpc=$(aws ec2 create-vpc --cidr-block 192.168.99.0/24 | json Vpc.VpcId)
 subnet=$(aws ec2 create-subnet --vpc-id $vpc --cidr-block 192.168.99.0/24 | json Subnet.SubnetId)
 gw=$(aws ec2 create-internet-gateway | json InternetGateway.InternetGatewayId)
@@ -13,6 +18,17 @@ aws ec2 authorize-security-group-ingress --group-id $sg --protocol tcp --port 32
 aws ec2 authorize-security-group-ingress --group-id $sg --protocol tcp --port 30900 --cidr 0.0.0.0/0
 aws ec2 authorize-security-group-ingress --group-id $sg --protocol tcp --port 30950 --cidr 0.0.0.0/0
 aws ec2 authorize-security-group-ingress --group-id $sg --protocol all --cidr 192.168.99.0/24
-ami=$(aws ec2 describe-images --owners 679593333241 --filters Name=name,Values='CentOS Linux 7 x86_64 HVM EBS*' Name=architecture,Values=x86_64 Name=root-device-type,Values=ebs --query 'sort_by(Images, &Name)[-1].ImageId' --output text)
 
-export subnet sg ami
+case $distro in
+  ubuntu)
+    ami=$(aws ec2 describe-images --owners 099720109477 --filters Name=name,Values=ubuntu/images/hvm-ssd/ubuntu-bionic-18.04-amd64-* --query 'sort_by(Images,&CreationDate)[-1].ImageId' --output text)
+  ;;
+  centos)
+    ami=$(aws ec2 describe-images --owners 679593333241 --filters Name=name,Values='CentOS Linux 7 x86_64 HVM EBS*' Name=architecture,Values=x86_64 Name=root-device-type,Values=ebs --query 'sort_by(Images, &Name)[-1].ImageId' --output text)
+  ;;
+  *)
+    echo Please set DISTRO to a valid value
+  ;;
+esac
+
+export subnet sg ami distro AWS_DEFAULT_REGION
