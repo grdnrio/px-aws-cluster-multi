@@ -75,6 +75,7 @@ Vagrant.configure("2") do |config|
           yum install -y docker kubeadm git vim
           alias ls='ls -la'
           git clone https://github.com/grdnrio/sa-toolkit.git
+          yum install -y docker kubeadm git
           systemctl start docker
           kubeadm config images pull &
           systemctl enable docker kubelet
