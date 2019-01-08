@@ -62,7 +62,6 @@ Vagrant.configure("2") do |config|
       end
       master.vm.provision "shell", inline: <<-SHELL
         ( hostnamectl set-hostname #{hostname_master}
-<<<<<<< HEAD
           if [ #{distro} == centos ]; then
             sed -i s/enabled=1/enabled=0/ /etc/yum/pluginconf.d/fastestmirror.conf
             cp /vagrant/*.repo /etc/yum.repos.d
@@ -73,11 +72,9 @@ Vagrant.configure("2") do |config|
             apt update -y
             apt install -y docker.io kubeadm
           fi
-=======
           yum install -y docker kubeadm git vim
           alias ls='ls -la'
           git clone https://github.com/grdnrio/sa-toolkit.git
->>>>>>> Adds package requirements
           systemctl start docker
           kubeadm config images pull &
           systemctl enable docker kubelet
