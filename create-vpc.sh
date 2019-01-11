@@ -1,8 +1,8 @@
 # Set the AWS region
-AWS_DEFAULT_REGION=eu-west-1
+AWS_DEFAULT_REGION=eu-west-2
 
 # Valid distros are 'ubuntu' and 'centos'
-distro=ubuntu
+distro=centos
 
 # Do not change below this line
 vpc=$(aws ec2 create-vpc --cidr-block 192.168.99.0/24 | json Vpc.VpcId)
