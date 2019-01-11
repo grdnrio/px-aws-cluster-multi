@@ -2,7 +2,7 @@
 clusters = 2
 nodes = 3
 disk_size = 20
-keypair_name = "***"
+keypair_name = "jgardiner"
 type = "t3.medium"
 
 # Do not edit below this line
